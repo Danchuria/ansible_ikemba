@@ -1,0 +1,50 @@
+name: CI/CD Ansible Node.js
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Instalar dependencias y ejecutar tests
+      run: |
+        cd app
+        npm ci
+        npm test
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: http://192.168.82.192:3000
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Configurar SSH Agent
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    
+    - name: Generar known_hosts
+      run: |
+        mkdir -p ~/.ssh
+        ssh-keyscan -H 192.168.82.192 >> ~/.ssh/known_hosts
+    
+    - name: Desplegar con Ansible
+      run: |
+        ansible-galaxy collection install community.general
+        ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventories/production.yml ansible/playbooks/deploy.yml
