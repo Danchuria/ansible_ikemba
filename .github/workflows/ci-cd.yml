@@ -3,8 +3,6 @@ name: CI/CD Ansible Node.js
 on:
   push:
     branches: [ master ]
-  pull_request:
-    branches: [ master ]
 
 jobs:
   test:
@@ -17,34 +15,30 @@ jobs:
       with:
         node-version: '18'
         cache: 'npm'
-        
-    - name: Instalar dependencias y ejecutar tests
+        cache-dependency-path: 'app/package-lock.json'
+    
+    - name: Test App
+      working-directory: ./app
       run: |
-        cd app
         npm ci
         npm test
 
   deploy:
     needs: test
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: http://192.168.82.192:3000
     steps:
     - uses: actions/checkout@v4
     
-    - name: Configurar SSH Agent
-      uses: webfactory/ssh-agent@v0.9.0
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.3
       with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-    
-    - name: Generar known_hosts
-      run: |
-        mkdir -p ~/.ssh
-        ssh-keyscan -H 192.168.82.192 >> ~/.ssh/known_hosts
-    
-    - name: Desplegar con Ansible
-      run: |
-        ansible-galaxy collection install community.general
-        ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ansible/inventories/production.yml ansible/playbooks/deploy.yml
+        host: 192.168.82.192
+        username: deploy
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd /home/deploy/apps/myapp
+          git pull origin master
+          cd app
+          npm ci --production
+          sudo systemctl restart myapp
