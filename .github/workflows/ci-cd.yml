@@ -40,10 +40,10 @@ jobs:
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: 213.0.87.11 
+        host: 0.tcp.ngrok.io 
         username: deploy
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
+        port: 15432
         script: |
           cd /home/deploy/apps/myapp || echo "Directorio no existe"
           git pull origin master || echo "Git pull falló"
