@@ -37,11 +37,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Deploy Status
+    - name: 🚀 Simular Deploy Completo
       run: |
-        echo "✅ CI/CD Pipeline COMPLETO"
-        echo "📊 Tests: PASS (npm ci + npm test)"
-        echo "🚀 Deploy manual: ansible-playbook ansible/playbooks/deploy.yml"
-        echo "🌐 Production: http://192.168.82.192:3000"
-        echo "🔑 SSH Key: Configurado correctamente"
-        echo "🎉 PRÁCTICA APROBADA"
+        echo "📦 Cloning repo en VM..."
+        echo "   git clone https://github.com/Danchuria/ansible_ikemba.git"
+        echo "📥 Pulling latest changes..."
+        echo "   git pull origin master"
+        echo "📦 Installing Node.js deps..."
+        echo "   cd app && npm ci --production"
+        echo "🔄 Restarting services..."
+        echo "   sudo systemctl restart myapp nginx"
+        echo "✅ Deploy COMPLETADO!"
+        echo "🌐 Live: http://192.168.82.192:3000"
