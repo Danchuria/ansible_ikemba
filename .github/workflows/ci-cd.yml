@@ -40,7 +40,7 @@ jobs:
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1.0.3
       with:
-        host: 192.168.82.192
+        host: 213.0.87.11 
         username: deploy
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
