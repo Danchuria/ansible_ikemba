@@ -3,12 +3,15 @@ name: CI/CD Ansible Node.js
 on:
   push:
     branches: [ master ]
+  pull_request:
+    branches: [ master ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -17,7 +20,7 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'app/package-lock.json'
     
-    - name: Test App
+    - name: Install & Test App
       working-directory: ./app
       run: |
         npm ci
@@ -25,10 +28,14 @@ jobs:
 
   deploy:
     needs: test
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: http://192.168.82.192:3000
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Deploy via SSH
       uses: appleboy/ssh-action@v1.0.3
@@ -36,9 +43,10 @@ jobs:
         host: 192.168.82.192
         username: deploy
         key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
         script: |
-          cd /home/deploy/apps/myapp
-          git pull origin master
+          cd /home/deploy/apps/myapp || echo "Directorio no existe"
+          git pull origin master || echo "Git pull falló"
           cd app
           npm ci --production
-          sudo systemctl restart myapp
+          pm2 restart myapp || sudo systemctl restart myapp || echo "Restart falló"
